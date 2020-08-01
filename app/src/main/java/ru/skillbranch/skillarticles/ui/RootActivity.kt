@@ -20,7 +20,6 @@ import ru.skillbranch.skillarticles.viewmodels.ViewModelFactory
 class RootActivity : AppCompatActivity() {
     private lateinit var viewModel: ArticleViewModel
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_root)
