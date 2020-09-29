@@ -1,15 +1,17 @@
 package ru.skillbranch.skillarticles.data.repositories
 
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.Transformations
 import ru.skillbranch.skillarticles.data.*
-
 
 object ArticleRepository {
     private val local = LocalDataHolder
     private val network = NetworkDataHolder
 
-    fun loadArticleContent(articleId: String): LiveData<String?> {
-        return network.loadArticleContent(articleId) //5s delay from network
+    fun loadArticleContent(articleId: String): LiveData<List<MarkdownElement>?> {
+        return Transformations.map(network.loadArticleContent(articleId)) { id ->
+            return@map id?.let { MarkdownParser.parse(it) }
+        }
     }
 
     fun getArticle(articleId: String): LiveData<ArticleData?> {
@@ -21,7 +23,6 @@ object ArticleRepository {
     }
 
     fun getAppSettings(): LiveData<AppSettings> = local.getAppSettings() //from preferences
-
     fun updateSettings(appSettings: AppSettings) {
         local.updateAppSettings(appSettings)
     }
