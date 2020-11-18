@@ -37,6 +37,7 @@ abstract class BaseViewModel<T : IViewModelState>(initState: T) : ViewModel() {
         state.value = updatedState
     }
 
+
     /***
      * функция для создания уведомления пользователя о событии (событие обрабатывается только один раз)
      * соответсвенно при изменении конфигурации и пересоздании Activity уведомление не будет вызвано
@@ -71,8 +72,7 @@ abstract class BaseViewModel<T : IViewModelState>(initState: T) : ViewModel() {
      * изменяет его и возвращает модифицированное состояние, которое устанавливается как текущее
      */
     protected fun <S> subscribeOnDataSource(
-        source: LiveData<S>,
-        onChanged: (newValue: S, currentState: T) -> T?
+        source: LiveData<S>, onChanged: (newValue: S, currentState: T) -> T?
     ) {
         state.addSource(source) {
             state.value = onChanged(it, currentState) ?: return@addSource
