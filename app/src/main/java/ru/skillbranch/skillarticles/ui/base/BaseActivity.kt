@@ -236,5 +236,4 @@ class BottombarBuilder() {
                 .slideUp(this)
         }
     }
-
 }
