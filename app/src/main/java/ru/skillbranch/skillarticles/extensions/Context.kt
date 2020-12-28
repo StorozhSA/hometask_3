@@ -15,7 +15,6 @@ fun Context.dpToPx(dp: Int): Float {
         TypedValue.COMPLEX_UNIT_DIP,
         dp.toFloat(),
         this.resources.displayMetrics
-
     )
 }
 
@@ -27,16 +26,14 @@ fun Context.dpToIntPx(dp: Int): Int {
     ).toInt()
 }
 
-@Throws(Resources.NotFoundException::class)
-fun Context.attrValue(res: Int): Int {
-    val tv = TypedValue()
-    if (!this.theme.resolveAttribute(
-            res,
-            tv,
-            true
-        )
-    ) throw Resources.NotFoundException("Resources with id $res not found")
-    return tv.data
+fun Context.hideKeyboard(view: View) {
+    val imm = getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
+    imm.hideSoftInputFromWindow(view.windowToken, 0)
+}
+
+fun Context.showKeyboard(view: View) {
+    val imm = getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
+    imm.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT)
 }
 
 val Context.isNetworkAvailable: Boolean
@@ -54,7 +51,12 @@ val Context.isNetworkAvailable: Boolean
         }
     }
 
-fun Context.hideKeyboard(view: View) {
-    val imm = getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
-    imm.hideSoftInputFromWindow(view.windowToken, 0)
+fun Context.attrValue(res: Int): Int {
+    var value: Int = 0
+    val tv = TypedValue()
+
+    if (this.theme.resolveAttribute(res, tv, true)) value = tv.data
+    else throw Resources.NotFoundException("Resource with id $res not found")
+
+    return value
 }

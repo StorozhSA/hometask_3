@@ -10,8 +10,10 @@ import android.view.MenuItem
 import android.view.WindowManager
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.widget.SearchView
+import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.navArgs
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
@@ -20,16 +22,14 @@ import com.google.android.material.appbar.AppBarLayout
 import kotlinx.android.synthetic.main.fragment_article.*
 import kotlinx.android.synthetic.main.layout_bottombar.*
 import kotlinx.android.synthetic.main.layout_bottombar.view.*
-import kotlinx.android.synthetic.main.layout_submenu.*
 import kotlinx.android.synthetic.main.layout_submenu.view.*
 import kotlinx.android.synthetic.main.search_view_layout.*
 import ru.skillbranch.skillarticles.R
 import ru.skillbranch.skillarticles.data.repositories.MarkdownElement
-import ru.skillbranch.skillarticles.extensions.dpToIntPx
-import ru.skillbranch.skillarticles.extensions.format
-import ru.skillbranch.skillarticles.extensions.hideKeyboard
-import ru.skillbranch.skillarticles.extensions.setMarginOptionally
+import ru.skillbranch.skillarticles.extensions.*
 import ru.skillbranch.skillarticles.ui.base.*
+import ru.skillbranch.skillarticles.ui.custom.ArticleSubmenu
+import ru.skillbranch.skillarticles.ui.custom.Bottombar
 import ru.skillbranch.skillarticles.ui.delegates.RenderProp
 import ru.skillbranch.skillarticles.viewmodels.article.ArticleState
 import ru.skillbranch.skillarticles.viewmodels.article.ArticleViewModel
@@ -46,6 +46,16 @@ class ArticleFragment : BaseFragment<ArticleViewModel>(), IArticleView {
         )
     }
 
+    private val commentsAdapter by lazy {
+        CommentsAdapter {
+            Log.e("ArticleFragment", "click on conment: ${it.id} ${it.slug}")
+            viewModel.handleReplyTo(it.slug, it.user.name)
+            et_comment.requestFocus()
+            scroll.smoothScrollTo(0, wrap_comments.top)
+            et_comment.context.showKeyboard(et_comment)
+        }
+    }
+
     override val layout: Int = R.layout.fragment_article
     override val binding: ArticleBinding by lazy { ArticleBinding() }
 
@@ -55,10 +65,10 @@ class ArticleFragment : BaseFragment<ArticleViewModel>(), IArticleView {
             .setLogo(args.categoryIcon)
             .addMenuItem(
                 MenuItemHolder(
-                    title = "search",
-                    menuId = R.id.action_search,
-                    icon = R.drawable.ic_search_black_24dp,
-                    actionViewLayout = R.layout.search_view_layout
+                    "search",
+                    R.id.action_search,
+                    R.drawable.ic_search_black_24dp,
+                    R.layout.search_view_layout
                 )
             )
     }
@@ -70,10 +80,9 @@ class ArticleFragment : BaseFragment<ArticleViewModel>(), IArticleView {
     }
 
     private val bottombar
-        get() = root.bottombar
-
+        get() = root.findViewById<Bottombar>(R.id.bottombar)
     private val submenu
-        get() = root.submenu
+        get() = root.findViewById<ArticleSubmenu>(R.id.submenu)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -108,9 +117,27 @@ class ArticleFragment : BaseFragment<ArticleViewModel>(), IArticleView {
 
         et_comment.setOnEditorActionListener { view, _, _ ->
             root.hideKeyboard(view)
-            viewModel.handleSendComment()
+            viewModel.handleSendComment(view.text.toString())
+            view.text = null
+            view.clearFocus()
             true
         }
+
+        et_comment.setOnFocusChangeListener { _, hasFocus -> viewModel.handleCommentFocus(hasFocus) }
+
+        wrap_comments.setEndIconOnClickListener { view ->
+            view.context.hideKeyboard(view)
+            viewModel.handleClearComment()
+            et_comment.text = null
+            et_comment.clearFocus()
+        }
+
+        with(rv_comments) {
+            layoutManager = LinearLayoutManager(requireContext())
+            adapter = commentsAdapter
+        }
+
+        viewModel.observeList(viewLifecycleOwner) { commentsAdapter.submitList(it) }
     }
 
     override fun onDestroyView() {
@@ -174,7 +201,10 @@ class ArticleFragment : BaseFragment<ArticleViewModel>(), IArticleView {
     }
 
     private fun setupBottombar() {
-        bottombar.btn_like.setOnClickListener { viewModel.handleLike() }
+        bottombar.btn_like.setOnClickListener {
+            viewModel.handleLike()
+            Log.e("ArticleFragment", "bottombar click: ");
+        }
         bottombar.btn_bookmark.setOnClickListener { viewModel.handleBookmark() }
         bottombar.btn_share.setOnClickListener { viewModel.handleShare() }
         bottombar.btn_settings.setOnClickListener { viewModel.handleToggleMenu() }
@@ -266,6 +296,16 @@ class ArticleFragment : BaseFragment<ArticleViewModel>(), IArticleView {
             if (it.isNotEmpty()) setupCopyListener()
         }
 
+        private var answerTo by RenderProp("Comment") { wrap_comments.hint = it }
+        private var isShowBottombar by RenderProp(true) {
+            if (it) bottombar.show() else bottombar.hide()
+            if (submenu.isOpen) submenu.isVisible = it
+        }
+
+        private var comment by RenderProp("") {
+            et_comment.setText(it)
+        }
+
         override var afterInflated: (() -> Unit)? = {
             dependsOn<Boolean, Boolean, List<Pair<Int, Int>>, Int>(
                 ::isLoadingContent,
@@ -301,6 +341,9 @@ class ArticleFragment : BaseFragment<ArticleViewModel>(), IArticleView {
             searchQuery = data.searchQuery
             searchPosition = data.searchPosition
             searchResults = data.searchResults
+            answerTo = data.answerTo ?: "Comment"
+            isShowBottombar = data.showBottomBar
+            comment = data.comment ?: ""
         }
 
         override fun saveUi(outState: Bundle) {
