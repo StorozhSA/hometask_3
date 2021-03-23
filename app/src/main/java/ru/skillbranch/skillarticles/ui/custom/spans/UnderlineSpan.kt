@@ -13,7 +13,6 @@ class UnderlineSpan(
 ) : ReplacementSpan() {
     private var textWidth = 0
     private val dashs = DashPathEffect(floatArrayOf(dotWidth, dotWidth), 0f)
-
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     var path = Path()
 

@@ -32,9 +32,8 @@ class BlockquotesSpan(
         }
     }
 
-    override fun getLeadingMargin(first: Boolean): Int {
-        return (quoteWidth + gapWidth).toInt()
-    }
+    override fun getLeadingMargin(first: Boolean): Int = (quoteWidth + gapWidth).toInt()
+
 
     private inline fun Paint.withCustomColor(block: () -> Unit) {
         val oldColor = color

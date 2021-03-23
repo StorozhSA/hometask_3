@@ -16,7 +16,6 @@ import ru.skillbranch.skillarticles.ui.custom.spans.HeaderSpan
 import ru.skillbranch.skillarticles.ui.custom.spans.SearchFocusSpan
 import ru.skillbranch.skillarticles.ui.custom.spans.SearchSpan
 
-
 @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
 class SearchBgHelper(
     context: Context,
@@ -50,31 +49,32 @@ class SearchBgHelper(
         mockDrawable ?: GradientDrawable().apply {
             shape = GradientDrawable.RECTANGLE
             cornerRadii = floatArrayOf(
-                radius, radius,
-                0f, 0f,
-                0f, 0f,
-                radius, radius
+                radius, radius,  // Top left radius in px
+                0f, 0f,   // Top right radius in px
+                0f, 0f,     // Bottom right radius in px
+                radius, radius      // Bottom left radius in px
             )
             color = ColorStateList.valueOf(alphaColor)
             setStroke(borderWidth, secondaryColor)
         }
     }
+
     private val drawableMiddle: Drawable by lazy {
         mockDrawable ?: GradientDrawable().apply {
             shape = GradientDrawable.RECTANGLE
-            //cornerRadii = FloatArray(8).apply { fill(0f,0,size) }
             color = ColorStateList.valueOf(alphaColor)
             setStroke(borderWidth, secondaryColor)
         }
     }
+
     private val drawableRight: Drawable by lazy {
         mockDrawable ?: GradientDrawable().apply {
             shape = GradientDrawable.RECTANGLE
             cornerRadii = floatArrayOf(
-                0f, 0f,
-                radius, radius,
-                radius, radius,
-                0f, 0f
+                0f, 0f,  // Top left radius in px
+                radius, radius,   // Top right radius in px
+                radius, radius,     // Bottom right radius in px
+                0f, 0f      // Bottom left radius in px
             )
             color = ColorStateList.valueOf(alphaColor)
             setStroke(borderWidth, secondaryColor)
@@ -107,6 +107,7 @@ class SearchBgHelper(
             endLine = layout.getLineForOffset(spanEnd)
 
             if (it is SearchFocusSpan) {
+                //if search focus invoke listener for focus
                 focusListener?.invoke(layout.getLineTop(startLine), layout.getLineBottom(startLine))
             }
 
@@ -131,6 +132,7 @@ class SearchBgHelper(
             endOffset = layout.getPrimaryHorizontal(spanEnd).toInt()
 
             render = if (startLine == endLine) singleLineRender else multiLineRender
+
             render.draw(
                 canvas,
                 layout,
@@ -142,7 +144,6 @@ class SearchBgHelper(
                 bottomExtraPadding
             )
         }
-
     }
 }
 
@@ -236,7 +237,7 @@ class MultiLineRender(
         }
 
         //draw last line
-        lineStartOffset = (layout.getLineLeft(startLine) - padding).toInt()
+        lineStartOffset = (layout.getLineLeft(endLine) - padding).toInt()
         lineTop = getLineTop(layout, endLine)
         lineBottom = getLineBottom(layout, endLine) - bottomExtraPadding
         drawEnd(canvas, lineStartOffset, lineTop, endOffset + padding, lineBottom)

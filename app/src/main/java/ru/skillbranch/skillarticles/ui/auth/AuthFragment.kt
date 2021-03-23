@@ -21,6 +21,7 @@ class AuthFragment : BaseFragment<AuthViewModel>() {
         tv_privacy.setOnClickListener {
             viewModel.navigate(NavigationCommand.To(R.id.page_privacy_policy))
         }
+
         btn_login.setOnClickListener {
             viewModel.handleLogin(
                 et_login.text.toString(),
@@ -28,6 +29,7 @@ class AuthFragment : BaseFragment<AuthViewModel>() {
                 if (args.privateDestination == -1) null else args.privateDestination
             )
         }
+
         val color = root.attrValue(R.attr.colorPrimary)
         (tv_access_code.text as Spannable).let { it[0..it.length] = UnderlineSpan(color) }
         (tv_privacy.text as Spannable).let { it[0..it.length] = UnderlineSpan(color) }

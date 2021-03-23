@@ -16,10 +16,11 @@ class RenderProp<T : Any>(
     }
 
     operator fun provideDelegate(
-        thisRef: Binding, prop: KProperty<*>
+        thisRef: Binding,
+        property: KProperty<*>
     ): ReadWriteProperty<Binding, T> {
         val delegate = RenderProp(value, needInit, onChange)
-        registerDelegate(thisRef, prop.name, delegate)
+        registerDelegate(thisRef, property.name, delegate)
         return delegate
     }
 
@@ -32,7 +33,7 @@ class RenderProp<T : Any>(
         if (listeners.isNotEmpty()) listeners.forEach { it.invoke() }
     }
 
-    //register additional listener
+    // register additional listener
     fun addListener(listener: () -> Unit) {
         listeners.add(listener)
     }

@@ -42,19 +42,19 @@ class IconLinkSpan(
         bottom: Int,
         paint: Paint
     ) {
-
         val textStart = x + iconSize + padding
         paint.forLine {
             path.reset()
-            path.moveTo(textStart, bottom.toFloat())
-            path.lineTo(textStart + textWidth, bottom.toFloat())
+            path.moveTo(textStart, y + paint.descent())
+            path.lineTo(textStart + textWidth, y + paint.descent())
             canvas.drawPath(path, paint)
         }
 
         paint.forIcon {
             canvas.save()
-            val trY = bottom - linkDrawable.bounds.bottom
-            canvas.translate(x, trY.toFloat())
+            val trY = y + paint.descent() - linkDrawable.bounds.bottom
+            canvas.translate(x + padding / 2f, trY)
+            linkDrawable.setTint(iconColor)
             linkDrawable.draw(canvas)
             canvas.restore()
         }
@@ -64,6 +64,7 @@ class IconLinkSpan(
         }
     }
 
+
     override fun getSize(
         paint: Paint,
         text: CharSequence?,
@@ -71,15 +72,15 @@ class IconLinkSpan(
         end: Int,
         fm: Paint.FontMetricsInt?
     ): Int {
-
         if (fm != null) {
-            iconSize = fm.descent - fm.ascent // fontSize
+            iconSize = fm.descent - fm.ascent //font size
             linkDrawable.setBounds(0, 0, iconSize, iconSize)
-            linkDrawable.setTint(iconColor)
+
         }
         textWidth = paint.measureText(text.toString(), start, end)
         return (iconSize + padding + textWidth).toInt()
     }
+
 
     private inline fun Paint.forLine(block: () -> Unit) {
         val oldColor = color

@@ -6,6 +6,7 @@ import android.text.style.ReplacementSpan
 import androidx.annotation.ColorInt
 import androidx.annotation.Px
 
+
 class HorizontalRuleSpan(
     @Px
     val ruleWidth: Float,

@@ -22,7 +22,6 @@ abstract class Binding {
     }
 
     abstract fun bind(data: IViewModelState)
-
     /**
      * override this if need save binding in bundle
      */
@@ -56,4 +55,6 @@ abstract class Binding {
             }
         }
     }
+
+
 }

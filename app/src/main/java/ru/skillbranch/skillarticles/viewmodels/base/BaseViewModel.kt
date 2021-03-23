@@ -13,7 +13,6 @@ abstract class BaseViewModel<T : IViewModelState>(
 ) : ViewModel() {
     @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
     val notifications = MutableLiveData<Event<Notify>>()
-
     @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
     val navigation = MutableLiveData<Event<NavigationCommand>>()
 
@@ -34,12 +33,13 @@ abstract class BaseViewModel<T : IViewModelState>(
     val currentState
         get() = state.value!!
 
+
     /***
      * лямбда выражение принимает в качестве аргумента текущее состояние и возвращает
      * модифицированное состояние, которое присваивается текущему состоянию
      */
     @UiThread
-    protected inline fun updateState(update: (currentState: T) -> T) {
+    inline fun updateState(update: (currentState: T) -> T) {
         val updatedState: T = update(currentState)
         state.value = updatedState
     }
@@ -95,14 +95,17 @@ abstract class BaseViewModel<T : IViewModelState>(
         }
     }
 
-    fun saveState() {
+    open fun saveState() {
         currentState.save(handleState)
     }
 
     @Suppress("UNCHECKED_CAST")
     fun restoreState() {
+        val restoredState = currentState.restore(handleState) as T
+        if (currentState == restoredState) return
         state.value = currentState.restore(handleState) as T
     }
+
 }
 
 class Event<out E>(private val content: E) {

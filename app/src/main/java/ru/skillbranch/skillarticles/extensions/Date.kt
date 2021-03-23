@@ -2,23 +2,31 @@ package ru.skillbranch.skillarticles.extensions
 
 import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.math.abs
-import kotlin.math.round
 
 const val SECOND = 1000L
 const val MINUTE = 60 * SECOND
 const val HOUR = 60 * MINUTE
 const val DAY = 24 * HOUR
 
+
 fun Date.format(pattern: String = "HH:mm:ss dd.MM.yy"): String {
-    val dateFormat = SimpleDateFormat(pattern, Locale("ru"))
+    val dateFormat = SimpleDateFormat(pattern, Locale.getDefault())
     return dateFormat.format(this)
 }
 
-fun Date.shortFormat(): String {
+fun Date.add(value: Int, unit: TimeUnits = TimeUnits.SECOND): Date {
+    time += when (unit) {
+        TimeUnits.SECOND -> value * SECOND
+        TimeUnits.MINUTE -> value * MINUTE
+        TimeUnits.HOUR -> value * HOUR
+        TimeUnits.DAY -> value * DAY
+    }
+    return this
+}
+
+fun Date.shortFormat(): String? {
     val pattern = if (this.isSameDay(Date())) "HH:mm" else "dd.MM.yy"
-    val dateFormat = SimpleDateFormat(pattern, Locale("ru"))
-    return dateFormat.format(this)
+    return this.format(pattern)
 }
 
 fun Date.isSameDay(date: Date): Boolean {
@@ -27,96 +35,120 @@ fun Date.isSameDay(date: Date): Boolean {
     return day1 == day2
 }
 
-fun Date.add(value: Int, units: TimeUnits = TimeUnits.SECOND): Date {
-    var time = this.time
-
-    time += when (units) {
-        TimeUnits.SECOND -> value * SECOND
-        TimeUnits.MINUTE -> value * MINUTE
-        TimeUnits.HOUR -> value * HOUR
-        TimeUnits.DAY -> value * DAY
-    }
-    this.time = time
-    return this
-}
-
 fun Date.humanizeDiff(date: Date = Date()): String {
-    val difDate = abs(this.time - date.time)
-    val message: String
-    val isNeg = this.time < date.time
+    val diff = date.time - this.time
 
-    when (difDate) {
-        in 0..1 * SECOND -> message = "только что"
-        in 1 * SECOND..45 * SECOND -> message =
-            if (isNeg) "несколько секунд назад" else "через несколько секунд"
-        in 45 * SECOND..75 * SECOND -> message = if (isNeg) "минуту назад" else "минуту"
-        in 75 * SECOND..45 * MINUTE -> message =
-            if (isNeg) "${declineMinutes(round(difDate.toDouble() / MINUTE).toInt())} назад" else "через ${
-                declineMinutes(round(difDate.toDouble() / MINUTE).toInt())
-            }"
-        in 45 * MINUTE..75 * MINUTE -> message = if (isNeg) "час назад" else {
-            "через час"
-        }
-        in 75 * MINUTE..22 * HOUR -> message =
-            if (isNeg) "${declineHours(round(difDate.toDouble() / HOUR).toInt())} назад" else "через ${
-                declineHours(round(difDate.toDouble() / HOUR).toInt())
-            }"
-        in 22 * HOUR..26 * HOUR -> message = if (isNeg) "день назад" else "через день"
-        in 26 * HOUR..360 * DAY -> message =
-            if (isNeg) "${declineDays(round(difDate.toDouble() / DAY).toInt())} назад" else "через ${
-                declineDays(round(difDate.toDouble() / DAY).toInt())
-            }"
-        else -> message = if (isNeg) "более года назад" else "более чем через год"
+    return when (Locale.getDefault()) {
+        Locale("ru") -> humanizeDiffRu(diff)
+        else -> humanizeDiffEng(diff)
     }
-
-    return message
 }
 
-private fun declineMinutes(minutes: Int): String {
-    val out: String
-
-    if (minutes % 100 in 5..20) out = "$minutes минут" else {
-        when (minutes % 10) {
-            1 -> out = "$minutes минуту"
-            in 2..4 -> out = "$minutes минуты"
-            else -> out = "$minutes минут"
+private fun humanizeDiffRu(timeDiff: Long): String {
+    var diff = timeDiff
+    var isInFuture = false
+    val pattern =
+        if (diff > 0) "%s назад"
+        else {
+            isInFuture = true
+            diff = -diff
+            "через %s"
         }
-    }
 
-    return out.toString()
+    return when (diff) {
+        in (0..SECOND) ->
+            "только что"
+        in (SECOND..45 * SECOND) ->
+            pattern.format("несколько секунд")
+        in (45 * SECOND..75 * SECOND) ->
+            pattern.format("минуту")
+        in (75 * SECOND..45 * MINUTE) ->
+            pattern.format(TimeUnits.MINUTE.pluralRu((diff / MINUTE).toInt()))
+        in (45 * MINUTE..75 * MINUTE) ->
+            pattern.format("час")
+        in (75 * MINUTE..22 * HOUR) ->
+            pattern.format(TimeUnits.HOUR.pluralRu((diff / HOUR).toInt()))
+        in (22 * HOUR..26 * HOUR) ->
+            pattern.format("день")
+        in (26 * HOUR..360 * DAY) ->
+            pattern.format(TimeUnits.DAY.pluralRu((diff / DAY).toInt()))
+        in (360 * DAY..Long.MAX_VALUE) ->
+            if (isInFuture) pattern.format("более чем год")
+            else pattern.format("более года")
+        else -> "Ошибка!"
+    }
 }
 
-private fun declineHours(hours: Int): String {
-    val out: String
+private fun humanizeDiffEng(timeDiff: Long): String {
+    var diff = timeDiff
+    val seconds = (diff / 1000)
+    val minutes = (seconds / 60)
+    val hours = (minutes / 60)
+    val days = (hours / 24)
 
-    if (hours % 100 in 5..20) out = "$hours часов" else {
-        when (hours % 10) {
-            1 -> out = "$hours час"
-            in 2..4 -> out = "$hours часа"
-            else -> out = "$hours часов"
+    var isInFuture = false
+    val pattern =
+        if (diff > 0) "%s ago"
+        else {
+            isInFuture = true
+            diff = -diff
+            "in %s"
         }
-    }
 
-    return out.toString()
+    return when (diff) {
+        in 0L..1 * SECOND -> "just now"
+        in 1 * SECOND..45 * SECOND -> pattern.format("a few seconds")
+        in 45 * SECOND..75 * SECOND -> pattern.format("a minute")
+        in 75 * SECOND..45 * MINUTE -> pattern.format("$minutes minutes")
+        in 45 * MINUTE..75 * MINUTE -> pattern.format("an hour")
+        in 75 * MINUTE..22 * HOUR -> pattern.format("$hours hour")
+        in 22 * HOUR..26 * HOUR -> pattern.format("one day")
+        in 26 * HOUR..360 * DAY -> pattern.format("$days days")
+        else -> pattern.format("more than a year")
+    }
 }
 
-private fun declineDays(days: Int): String {
-    val out: String
-
-    if (days % 100 in 5..20) out = "$days дней" else {
-        when (days % 10) {
-            1 -> out = "$days день"
-            in 2..4 -> out = "$days дня"
-            else -> out = "$days дней"
-        }
-    }
-
-    return out.toString()
-}
 
 enum class TimeUnits {
     SECOND,
     MINUTE,
     HOUR,
-    DAY
+    DAY;
+
+    fun pluralRu(value: Int): String {
+
+        val rangeType = when {
+            value in (5..20) || value % 10 in (5..10) -> 3
+            value % 10 == 1 -> 1
+            value % 10 in (2..4) -> 2
+            else -> 3
+        }
+
+        return when (this) {
+            SECOND -> when (rangeType) {
+                1 -> "$value секунду"
+                2 -> "$value секунды"
+                3 -> "$value секунд"
+                else -> "er1ошибка"
+            }
+            MINUTE -> when (rangeType) {
+                1 -> "$value минуту"
+                2 -> "$value минуты"
+                3 -> "$value минут"
+                else -> "er2ошибка"
+            }
+            HOUR -> when (rangeType) {
+                1 -> "$value час"
+                2 -> "$value часа"
+                3 -> "$value часов"
+                else -> "er3ошибка"
+            }
+            DAY -> when (rangeType) {
+                1 -> "$value день"
+                2 -> "$value дня"
+                3 -> "$value дней"
+                else -> "er4ошибка"
+            }
+        }
+    }
 }
