@@ -27,6 +27,7 @@ import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.RequestOptions.circleCropTransform
 import com.bumptech.glide.request.target.Target
 import com.google.android.material.appbar.AppBarLayout
+import kotlinx.android.synthetic.main.activity_root.*
 import kotlinx.android.synthetic.main.fragment_article.*
 import kotlinx.android.synthetic.main.layout_bottombar.view.*
 import kotlinx.android.synthetic.main.layout_submenu.view.*
@@ -44,6 +45,7 @@ import ru.skillbranch.skillarticles.ui.delegates.RenderProp
 import ru.skillbranch.skillarticles.viewmodels.article.ArticleState
 import ru.skillbranch.skillarticles.viewmodels.article.ArticleViewModel
 import ru.skillbranch.skillarticles.viewmodels.base.IViewModelState
+import ru.skillbranch.skillarticles.viewmodels.base.Loading
 import ru.skillbranch.skillarticles.viewmodels.base.ViewModelFactory
 
 
@@ -58,7 +60,7 @@ class ArticleFragment : BaseFragment<ArticleViewModel>(), IArticleView {
 
     private val commentsAdapter by lazy {
         CommentsAdapter {
-            viewModel.handleReplyTo(it.slug, it.user.name)
+            viewModel.handleReplyTo(it.id, it.user.name)
             et_comment.requestFocus()
             scroll.smoothScrollTo(0, wrap_comments.top)
             requireContext().showKeyboard(et_comment)
@@ -68,8 +70,7 @@ class ArticleFragment : BaseFragment<ArticleViewModel>(), IArticleView {
     override val layout: Int = R.layout.fragment_article
     override val binding: ArticleBinding by lazy { ArticleBinding() }
     override val prepareToolbar: (ToolbarBuilder.() -> Unit)? = {
-        this.setTitle(args.title)
-            .setSubtitle(args.category)
+        this.setSubtitle(args.category)
             .setLogo(args.categoryIcon)
             .addMenuItem(
                 MenuItemHolder(
@@ -95,6 +96,17 @@ class ArticleFragment : BaseFragment<ArticleViewModel>(), IArticleView {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
+    }
+
+    override fun renderLoading(loadingState: Loading) {
+        when (loadingState) {
+            Loading.SHOW_LOADING -> if (!refresh.isRefreshing) root.progress.isVisible = true
+            Loading.SHOW_BLOCKING_LOADING -> refresh.isRefreshing = false
+            Loading.HIDE_LOADING -> {
+                root.progress.isVisible = false
+                if (refresh.isRefreshing) refresh.isRefreshing = false
+            }
+        }
     }
 
     override fun setupViews() {
@@ -199,8 +211,7 @@ class ArticleFragment : BaseFragment<ArticleViewModel>(), IArticleView {
         et_comment.setOnEditorActionListener { view, _, _ ->
             requireContext().hideKeyboard(view)
             viewModel.handleSendComment(view.text.toString())
-            //view.text = null
-            view.clearFocus()
+            //view.clearFocus()
             true
         }
 
@@ -209,8 +220,10 @@ class ArticleFragment : BaseFragment<ArticleViewModel>(), IArticleView {
         wrap_comments.setEndIconOnClickListener { view ->
             requireContext().hideKeyboard(view)
             viewModel.handleClearComment()
-            et_comment.text = null
-            et_comment.clearFocus()
+        }
+
+        refresh.setOnRefreshListener {
+            viewModel.refresh()
         }
 
         with(rv_comments) {
