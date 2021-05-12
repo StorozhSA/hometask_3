@@ -5,16 +5,12 @@ import android.view.ViewGroup
 import androidx.paging.PagedListAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
-import dagger.hilt.android.scopes.ActivityScoped
 import ru.skillbranch.skillarticles.data.local.entities.ArticleItem
 import ru.skillbranch.skillarticles.ui.custom.ArticleItemView
-import javax.inject.Inject
 
-@ActivityScoped
-class ArticlesAdapter @Inject constructor(
+class ArticlesAdapter(
     private val listener: (ArticleItem, Boolean) -> Unit
 ) : PagedListAdapter<ArticleItem, ArticleVH>(ArticleDiffCallback()) {
-
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ArticleVH {
         val view = ArticleItemView(parent.context)
         return ArticleVH(view)
@@ -23,6 +19,7 @@ class ArticlesAdapter @Inject constructor(
     override fun onBindViewHolder(holder: ArticleVH, position: Int) {
         holder.bind(getItem(position), listener)
     }
+
 }
 
 class ArticleDiffCallback : DiffUtil.ItemCallback<ArticleItem>() {
@@ -33,12 +30,13 @@ class ArticleDiffCallback : DiffUtil.ItemCallback<ArticleItem>() {
         oldItem == newItem
 }
 
-class ArticleVH(private val containerView: View) : RecyclerView.ViewHolder(containerView) {
+class ArticleVH(val containerView: View) : RecyclerView.ViewHolder(containerView) {
     fun bind(
         item: ArticleItem?,
         listener: (ArticleItem, Boolean) -> Unit
     ) {
+
+        //if use placeholder item may be null
         (containerView as ArticleItemView).bind(item!!, listener)
     }
-
 }

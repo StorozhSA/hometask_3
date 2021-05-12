@@ -25,7 +25,7 @@ fun AuthorRes.toAuthor(): Author = Author(
     name = name
 )
 
-fun CategoryRes.toCategory() = Category(
+fun CategoryRes.toCategory(): Category = Category(
     categoryId = id,
     title = title,
     icon = icon

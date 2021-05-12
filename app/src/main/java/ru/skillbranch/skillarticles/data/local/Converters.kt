@@ -20,16 +20,6 @@ class MarkdownConverter {
 }
 
 class ListConverter {
-    companion object {
-        const val SPLITTING_SYMBOLS = ";"
-    }
-
     @TypeConverter
-    fun String?.toListOfStrings(): List<String> =
-        this?.split(SPLITTING_SYMBOLS) ?: emptyList()
-
-
-    @TypeConverter
-    fun List<String>.toStringConverter(): String =
-        this.joinToString(separator = SPLITTING_SYMBOLS) { it }
+    fun toList(str: String?): List<String> = str?.split(",") ?: emptyList()
 }

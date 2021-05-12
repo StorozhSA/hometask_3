@@ -21,48 +21,48 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
+        android:text="Hello"
         android:textColor="?attr/colorPrimary"
         android:textSize="18sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/iv_avatar"
-        tools:text="@tools:sample/full_names" />
+        app:layout_constraintTop_toBottomOf="@id/iv_avatar" />
 
     <TextView
         android:id="@+id/tv_rating"
         android:layout_width="112dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:layout_marginEnd="16dp"
         android:background="@drawable/bg_label"
         android:gravity="center"
         android:paddingTop="4dp"
         android:paddingBottom="4dp"
+        android:layout_marginEnd="16dp"
         android:textColor="@android:color/white"
+        android:text="Rating:"
         app:layout_constraintEnd_toStartOf="@+id/tv_respect"
         app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintHorizontal_chainStyle="packed"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tv_name"
-        tools:text="Rating: 56" />
+        app:layout_constraintHorizontal_chainStyle="packed" />
 
     <TextView
         android:id="@+id/tv_respect"
         android:layout_width="112dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
         android:layout_marginTop="16dp"
         android:background="@drawable/bg_label"
         android:gravity="center"
         android:paddingTop="4dp"
         android:paddingBottom="4dp"
+        android:layout_marginStart="16dp"
+        android:text="Respect:"
         android:textColor="@android:color/white"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/tv_rating"
-        app:layout_constraintTop_toBottomOf="@id/tv_name"
-        tools:text="Respect: 54" />
+        app:layout_constraintTop_toBottomOf="@id/tv_name" />
 
     <TextView
         android:id="@+id/tv_about"
@@ -72,10 +72,11 @@
         android:layout_marginRight="56dp"
         android:gravity="center"
         android:textColor="?attr/colorOnBackground"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tv_rating"
-        tools:text="@tools:sample/lorem/random" />
+        tools:text="lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

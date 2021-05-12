@@ -8,14 +8,12 @@ import java.util.*
 
 @Entity(
     tableName = "article_contents",
-    foreignKeys = [
-        ForeignKey(
-            entity = Article::class,
-            parentColumns = ["id"],
-            childColumns = ["article_id"],
-            onDelete = ForeignKey.CASCADE
-        )
-    ]
+    foreignKeys = [ForeignKey(
+        entity = Article::class,
+        parentColumns = ["id"],
+        childColumns = ["article_id"],
+        onDelete = ForeignKey.CASCADE
+    )]
 )
 data class ArticleContent(
     @PrimaryKey

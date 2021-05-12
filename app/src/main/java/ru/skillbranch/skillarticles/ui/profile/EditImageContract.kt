@@ -9,7 +9,6 @@ import android.provider.MediaStore
 import androidx.activity.result.contract.ActivityResultContract
 
 class EditImageContract : ActivityResultContract<Pair<Uri, Uri>, Uri?>() {
-
     override fun createIntent(context: Context, input: Pair<Uri, Uri>?): Intent {
         val intent = Intent(Intent.ACTION_EDIT).apply {
             setDataAndType(input!!.first, "image/jpeg")
@@ -19,10 +18,23 @@ class EditImageContract : ActivityResultContract<Pair<Uri, Uri>, Uri?>() {
             addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
             putExtra("return-value", true)
         }
-        return Intent.createChooser(intent, "Choose application to edit avatar")
+
+//        //scan all applications on device for resolve this intent action (action Intent.ACTION_EDIT) type "image/jpeg
+//        val resolveInfoList = context.packageManager
+//            .queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY)
+//            .map { info -> info.activityInfo.packageName }
+//        resolveInfoList.forEach { resolvePackage ->
+//            context.grantUriPermission(
+//                resolvePackage, //for package
+//                input!!.second, // for destination uri
+//                Intent.FLAG_GRANT_WRITE_URI_PERMISSION //grant permission for write to destination Uri
+//            )
+//        }
+        return Intent.createChooser(intent, "Choose application for edit avatar")
     }
 
-    override fun parseResult(resultCode: Int, intent: Intent?): Uri? =
-        if (resultCode == Activity.RESULT_OK) intent?.data
+    override fun parseResult(resultCode: Int, intent: Intent?): Uri? {
+        return if (resultCode == Activity.RESULT_OK) intent?.data
         else null
+    }
 }

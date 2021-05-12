@@ -6,21 +6,6 @@ import com.squareup.moshi.JsonAdapter
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
 
-class PrefLiveDelegate<T>(
-    private val fieldKey: String,
-    private val defaultValue: T,
-    private val preferences: SharedPreferences
-) : ReadOnlyProperty<Any?, LiveData<T>> {
-    private var storedValue: LiveData<T>? = null
-
-    override fun getValue(thisRef: Any?, property: KProperty<*>): LiveData<T> {
-        if (storedValue == null) {
-            storedValue = SharedPreferenceLiveData(preferences, fieldKey, defaultValue)
-        }
-        return storedValue!!
-    }
-}
-
 class PrefLiveObjDelegate<T>(
     private val fieldKey: String,
     private val adapter: JsonAdapter<T?>,
@@ -31,6 +16,21 @@ class PrefLiveObjDelegate<T>(
     override fun getValue(thisRef: Any?, property: KProperty<*>): LiveData<T?> {
         if (storedValue == null) {
             storedValue = SharedPreferenceLiveData(preferences, fieldKey, null, adapter)
+        }
+        return storedValue!!
+    }
+}
+
+class PrefLiveDelegate<T>(
+    private val fieldKey: String,
+    private val defaultValue: T,
+    private val preferences: SharedPreferences
+) : ReadOnlyProperty<Any?, LiveData<T>> {
+    private var storedValue: LiveData<T>? = null
+
+    override fun getValue(thisRef: Any?, property: KProperty<*>): LiveData<T> {
+        if (storedValue == null) {
+            storedValue = SharedPreferenceLiveData(preferences, fieldKey, defaultValue)
         }
         return storedValue!!
     }
@@ -56,22 +56,18 @@ internal class SharedPreferenceLiveData<T>(
     }
 
     override fun onInactive() {
-        sharedPrefs.unregisterOnSharedPreferenceChangeListener(preferencesChangeListener)
         super.onInactive()
+        sharedPrefs.unregisterOnSharedPreferenceChangeListener(preferencesChangeListener)
     }
 
     @Suppress("UNCHECKED_CAST")
-    private fun readValue(defaultValue: T?): T? {
-        return when (defaultValue) {
-            is Boolean -> sharedPrefs.getBoolean(key, defaultValue as Boolean) as T
-            is String -> sharedPrefs.getString(key, defaultValue as String) as T
-            is Float -> sharedPrefs.getFloat(key, defaultValue as Float) as T
-            is Int -> sharedPrefs.getInt(key, defaultValue as Int) as T
-            is Long -> sharedPrefs.getLong(key, defaultValue as Long) as T
-            null -> sharedPrefs.getString(key, null)?.let { adapter?.fromJson(it) }
-            else -> throw PrefDelegate.NotFoundRealizationException(defaultValue)
-        }
+    private fun readValue(defaultValue: T?): T? = when (defValue) {
+        is Boolean -> sharedPrefs.getBoolean(key, defaultValue as Boolean) as T
+        is String -> sharedPrefs.getString(key, defaultValue as String) as T
+        is Float -> sharedPrefs.getFloat(key, defaultValue as Float) as T
+        is Int -> sharedPrefs.getInt(key, defaultValue as Int) as T
+        is Long -> sharedPrefs.getLong(key, defaultValue as Long) as T
+        null -> sharedPrefs.getString(key, null)?.let { adapter?.fromJson(it) }
+        else -> error("Value must be primitive type in Preferences")
     }
 }
-
-

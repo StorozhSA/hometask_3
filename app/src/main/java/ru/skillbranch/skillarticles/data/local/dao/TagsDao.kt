@@ -12,19 +12,17 @@ import ru.skillbranch.skillarticles.data.local.entities.Tag
 interface TagsDao : BaseDao<Tag> {
     @Query(
         """
-            SELECT tag 
-            FROM article_tags
-            ORDER BY use_count DESC
-        """
+        SELECT tag FROM article_tags
+        ORDER BY use_count DESC
+    """
     )
     fun findTags(): LiveData<List<String>>
 
     @Query(
         """
-            UPDATE article_tags 
-            SET use_count = use_count+1
-            WHERE tag = :tag
-        """
+        UPDATE article_tags SET use_count = use_count+1
+        WHERE tag = :tag
+    """
     )
     suspend fun incrementTagUseCount(tag: String)
 

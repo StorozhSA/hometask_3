@@ -14,7 +14,6 @@ import kotlinx.android.synthetic.main.bottom_sheet.*
 import ru.skillbranch.skillarticles.R
 
 class AvatarActionsDialog : BottomSheetDialogFragment() {
-
     companion object {
         const val AVATAR_ACTIONS_KEY = "AVATAR_ACTIONS_KEY"
         const val SELECT_ACTION_KEY = "SELECT_ACTION_KEY"
@@ -26,7 +25,6 @@ class AvatarActionsDialog : BottomSheetDialogFragment() {
 
     private val args: AvatarActionsDialogArgs by navArgs()
 
-
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -36,25 +34,30 @@ class AvatarActionsDialog : BottomSheetDialogFragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-
+        //check device has camera
         val hasCamera = requireContext().packageManager.hasSystemFeature(FEATURE_CAMERA_ANY)
         item_camera.isVisible = hasCamera
-        item_camera.setOnClickListener { onItemClicked(CAMERA_KEY) }
+        item_camera.setOnClickListener {
+            setFragmentResult(AVATAR_ACTIONS_KEY, bundleOf(SELECT_ACTION_KEY to CAMERA_KEY))
+            dismiss()
+        }
 
-        item_gallery.setOnClickListener { onItemClicked(GALLERY_KEY) }
+        item_gallery.setOnClickListener {
+            setFragmentResult(AVATAR_ACTIONS_KEY, bundleOf(SELECT_ACTION_KEY to GALLERY_KEY))
+            dismiss()
+        }
 
         val hasAvatar = args.hasAvatar
-
         item_edit.isVisible = hasAvatar
-        item_edit.setOnClickListener { onItemClicked(EDIT_KEY) }
+        item_edit.setOnClickListener {
+            setFragmentResult(AVATAR_ACTIONS_KEY, bundleOf(SELECT_ACTION_KEY to EDIT_KEY))
+            dismiss()
+        }
 
         item_delete.isVisible = hasAvatar
-        item_delete.setOnClickListener { onItemClicked(DELETE_KEY) }
-    }
-
-    private fun onItemClicked(itemKey: String) {
-        setFragmentResult(AVATAR_ACTIONS_KEY, bundleOf(SELECT_ACTION_KEY to itemKey))
-        dismiss()
+        item_delete.setOnClickListener {
+            setFragmentResult(AVATAR_ACTIONS_KEY, bundleOf(SELECT_ACTION_KEY to DELETE_KEY))
+            dismiss()
+        }
     }
 }

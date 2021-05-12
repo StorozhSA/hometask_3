@@ -29,8 +29,9 @@ class MarkdownBuilder(context: Context) {
     private val headerMarginBottom = context.dpToPx(8)
     private val ruleWidth = context.dpToPx(2)
     private val cornerRadius = context.dpToPx(8)
-    private val linkIcon =
-        context.getDrawable(R.drawable.ic_link_black_24dp)!!.apply { setTint(colorSecondary) }
+    private val linkIcon = context.getDrawable(R.drawable.ic_link_black_24dp)!!.apply {
+        setTint(colorSecondary)
+    }
 
     fun markdownToSpan(textContent: MarkdownElement.Text): SpannedString {
         return buildSpannedString {
@@ -38,11 +39,10 @@ class MarkdownBuilder(context: Context) {
         }
     }
 
-    internal fun buildElement(element: Element, builder: SpannableStringBuilder): CharSequence {
+    fun buildElement(element: Element, builder: SpannableStringBuilder): CharSequence {
         return builder.apply {
             when (element) {
                 is Element.Text -> append(element.text)
-
                 is Element.UnorderedListItem -> {
                     inSpans(UnorderedListSpan(gap, bulletRadius, colorSecondary)) {
                         for (child in element.elements) {
@@ -121,12 +121,13 @@ class MarkdownBuilder(context: Context) {
 
                 is Element.Link -> {
                     inSpans(
-                        IconLinkSpan(linkIcon, colorSecondary, gap, colorPrimary, strikeWidth),
+                        IconLinkSpan(linkIcon, gap, colorPrimary, strikeWidth),
                         URLSpan(element.link)
                     ) {
                         append(element.text)
                     }
                 }
+
 
                 is Element.OrderedListItem -> {
                     inSpans(OrderedListSpan(gap, element.order, colorPrimary)) {

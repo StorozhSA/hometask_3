@@ -1,8 +1,10 @@
 package ru.skillbranch.skillarticles.data.local.dao
 
-import androidx.room.*
+import androidx.room.Delete
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Update
 
-@Dao
 interface BaseDao<T : Any> {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(list: List<T>): List<Long>

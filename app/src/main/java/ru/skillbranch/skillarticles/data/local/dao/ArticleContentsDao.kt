@@ -20,5 +20,5 @@ interface ArticleContentsDao {
             WHERE article_id = :articleId     
         """
     )
-    fun deleteById(articleId: String)
+    fun delete(articleId: String)
 }

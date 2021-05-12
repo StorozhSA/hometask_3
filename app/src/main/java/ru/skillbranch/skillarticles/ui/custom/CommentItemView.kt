@@ -196,6 +196,7 @@ class CommentItemView(context: Context) : ViewGroup(context, null, 0) {
                 foreground = null
             }
 
+
             Glide.with(context)
                 .load(item.user.avatar)
                 .apply(RequestOptions.circleCropTransform())
@@ -210,4 +211,5 @@ class CommentItemView(context: Context) : ViewGroup(context, null, 0) {
             iv_answer_icon.isVisible = item.answerTo != null
         }
     }
+
 }

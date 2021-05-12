@@ -3,7 +3,6 @@ package ru.skillbranch.skillarticles.ui.custom
 import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Typeface
-import android.util.AttributeSet
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
@@ -19,14 +18,13 @@ import ru.skillbranch.skillarticles.extensions.shortFormat
 import kotlin.math.max
 
 class ArticleItemView constructor(
-    context: Context,
-    attrs: AttributeSet? = null
+    context: Context
 ) : ViewGroup(context, null, 0) {
     private val iv_poster: ImageView
     private val iv_category: ImageView
     private val iv_likes: ImageView
     private val iv_comments: ImageView
-    private val iv_bookmark: CheckableImageView
+    val iv_bookmark: CheckableImageView
     private val tv_date: TextView
     private val tv_author: TextView
     private val tv_title: TextView
@@ -268,7 +266,9 @@ class ArticleItemView constructor(
         )
     }
 
-    fun bind(item: ArticleItem, listener: (ArticleItem, Boolean) -> Unit) {
+    fun bind(
+        item: ArticleItem, listener: (ArticleItem, Boolean) -> Unit
+    ) {
 
         tv_date.text = item.date.shortFormat()
         tv_author.text = item.author

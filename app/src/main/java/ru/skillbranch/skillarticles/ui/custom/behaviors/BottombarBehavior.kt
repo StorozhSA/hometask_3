@@ -6,7 +6,6 @@ import androidx.core.math.MathUtils
 import androidx.core.view.ViewCompat
 import ru.skillbranch.skillarticles.ui.custom.Bottombar
 
-
 class BottombarBehavior() : CoordinatorLayout.Behavior<Bottombar>() {
 
     override fun onStartNestedScroll(

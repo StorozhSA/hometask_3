@@ -1,6 +1,7 @@
 package ru.skillbranch.skillarticles.ui.custom.spans
 
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Paint
 import android.text.Layout
 import android.text.Spanned
@@ -31,7 +32,6 @@ class HeaderSpan constructor(
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     val linePadding = 0.4f
     private var originAscent = 0
-
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     val sizes = mapOf(
         1 to 2f,
@@ -70,11 +70,11 @@ class HeaderSpan constructor(
             fm.ascent = originAscent
         }
 
-        //line break +1 character
+//        line break +1 character
         if (spanEnd == end.dec()) {
             val originDescent = fm.descent
-            val originalHeight = fm.descent - originAscent
-            fm.descent = (originalHeight * linePadding + marginBottom).toInt()
+            val originHeight = fm.descent - originAscent
+            fm.descent = (originHeight * linePadding + marginBottom).toInt()
             bottomExtraPadding = fm.descent - originDescent
             lastLineBounds = start..end.dec()
         }
@@ -103,8 +103,7 @@ class HeaderSpan constructor(
         lineTop: Int, lineBaseline: Int, lineBottom: Int, text: CharSequence?, lineStart: Int,
         lineEnd: Int, isFirstLine: Boolean, layout: Layout?
     ) {
-        //for 1st & 2nd levels & the last line
-        if ((level in 1..2) && ((text as Spanned).getSpanEnd(this) == lineEnd)) {
+        if ((level == 1 || level == 2) && (text as Spanned).getSpanEnd(this) == lineEnd) {
             paint.forLine {
                 val lh = (paint.descent() - paint.ascent()) * sizes.getOrElse(level) { 1f }
                 val lineOffset = lineBaseline + lh * linePadding
@@ -118,10 +117,44 @@ class HeaderSpan constructor(
                 )
             }
         }
+//        for study draw text lines
+//        val oldSize = paint.textSize
+//        paint.textSize*=sizes[level]!!
+//        canvas.drawFontLines(lineTop, lineBottom, lineBaseline, paint)
+//        paint.textSize = oldSize
     }
 
     override fun getLeadingMargin(first: Boolean): Int {
+        //TODO implement me
         return 0
+    }
+
+    private fun Canvas.drawFontLines(
+        top: Int,
+        bottom: Int,
+        lineBaseline: Int,
+        paint: Paint
+    ) {
+        drawLine(0f, top + 0f, width + 0f, top + 0f, Paint().apply { color = Color.BLUE })
+        drawLine(0f, bottom + 0f, width + 0f, bottom + 0f, Paint().apply { color = Color.GREEN })
+        drawLine(
+            0f,
+            lineBaseline + 0f,
+            width + 0f,
+            lineBaseline + 0f,
+            Paint().apply { color = Color.RED })
+        drawLine(
+            0f,
+            paint.ascent() + lineBaseline,
+            width + 0f,
+            paint.ascent() + lineBaseline,
+            Paint().apply { color = Color.BLACK })
+        drawLine(
+            0f,
+            paint.descent() + lineBaseline,
+            width + 0f,
+            paint.descent() + lineBaseline,
+            Paint().apply { color = Color.MAGENTA })
     }
 
     private inline fun Paint.forLine(block: () -> Unit) {

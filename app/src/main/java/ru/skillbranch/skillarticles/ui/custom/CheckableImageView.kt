@@ -11,7 +11,6 @@ class CheckableImageView @JvmOverloads constructor(
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
 ) : AppCompatImageView(context, attrs, defStyleAttr), Checkable, View.OnClickListener {
-
     private var checked = false
 
     companion object {
@@ -43,4 +42,6 @@ class CheckableImageView @JvmOverloads constructor(
     override fun onClick(v: View?) {
         toggle()
     }
+
+
 }

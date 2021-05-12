@@ -18,8 +18,9 @@ class OrderedListSpan(
 ) : LeadingMarginSpan {
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
 
-    override fun getLeadingMargin(first: Boolean): Int =
-        (order.length.inc() * gapWidth).toInt()
+    override fun getLeadingMargin(first: Boolean): Int {
+        return (order.length.inc() * gapWidth.toInt())
+    }
 
     override fun drawLeadingMargin(
         canvas: Canvas, paint: Paint, currentMarginLocation: Int, paragraphDirection: Int,

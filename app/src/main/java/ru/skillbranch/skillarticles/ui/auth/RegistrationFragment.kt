@@ -1,54 +1,60 @@
 package ru.skillbranch.skillarticles.ui.auth
 
-import androidx.core.widget.doAfterTextChanged
+import androidx.annotation.VisibleForTesting
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.navArgs
+import androidx.savedstate.SavedStateRegistryOwner
 import kotlinx.android.synthetic.main.fragment_registration.*
 import ru.skillbranch.skillarticles.R
+import ru.skillbranch.skillarticles.extensions.afterTextChanged
+import ru.skillbranch.skillarticles.ui.RootActivity
 import ru.skillbranch.skillarticles.ui.base.BaseFragment
+import ru.skillbranch.skillarticles.ui.base.Binding
+import ru.skillbranch.skillarticles.ui.delegates.RenderProp
+import ru.skillbranch.skillarticles.viewmodels.auth.AuthState
 import ru.skillbranch.skillarticles.viewmodels.auth.AuthViewModel
+import ru.skillbranch.skillarticles.viewmodels.base.IViewModelState
 
 class RegistrationFragment() : BaseFragment<AuthViewModel>() {
-    override val viewModel: AuthViewModel by viewModels()
+    var _mockFactory: ((SavedStateRegistryOwner) -> ViewModelProvider.Factory)? = null
+    override val viewModel: AuthViewModel by viewModels {
+        _mockFactory?.invoke(this) ?: defaultViewModelProviderFactory
+    }
     override val layout: Int = R.layout.fragment_registration
+    override val binding: RegistrationBinding by lazy { RegistrationBinding() }
     private val args: AuthFragmentArgs by navArgs()
 
+    //testing constructor
+    @VisibleForTesting(otherwise = VisibleForTesting.NONE)
+    constructor(
+        mockRoot: RootActivity,
+        mockFactory: ((SavedStateRegistryOwner) -> ViewModelProvider.Factory)? = null
+    ) : this() {
+        _mockRoot = mockRoot
+        _mockFactory = mockFactory
+    }
 
     override fun setupViews() {
-
         btn_register.setOnClickListener {
             viewModel.handleRegister(
                 et_name.text.toString(),
                 et_login.text.toString(),
                 et_password.text.toString(),
-                if (args.privateDestination == -1) null else args.privateDestination,
-                requireContext()
+                if (args.privateDestination == -1) null else args.privateDestination
             )
         }
 
-        et_name.doAfterTextChanged {
-            if (!viewModel.isNameValid(it.toString())) {
-                wrap_name.error = getString(R.string.reg_err__invalid_name)
-            } else wrap_name.error = null
+        et_repeat_password.afterTextChanged { viewModel.handreRepeatPass(it) }
+    }
 
+    inner class RegistrationBinding() : Binding() {
+        var repeatPass: String by RenderProp("") { et_repeat_password.setText(it) }
+
+        override fun bind(data: IViewModelState) {
+            data as AuthState
+            repeatPass = data.repeatPass
         }
 
-        et_login.doAfterTextChanged {
-            if (!viewModel.isEmailValid(it.toString())) {
-                wrap_login.error = getString(R.string.reg_err__invalid_email)
-            } else wrap_login.error = null
-        }
-
-        et_password.doAfterTextChanged {
-            if (!viewModel.isPasswordValid(it.toString())) {
-                wrap_password.error = getString(R.string.reg_err__invalid_password)
-            } else wrap_password.error = null
-        }
-
-        et_confirm.doAfterTextChanged {
-            if (et_confirm.text.toString() != et_password.text.toString()) {
-                wrap_confirm.error = getString(R.string.reg_err__mismatching_passwords)
-            } else wrap_confirm.error = null
-        }
     }
 }

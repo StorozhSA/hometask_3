@@ -3,13 +3,11 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/refresh"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="wrap_content">
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv_articles"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:context=".ui.articles.ArticlesFragment"
         tools:listitem="@layout/item_article" />
-
 </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>

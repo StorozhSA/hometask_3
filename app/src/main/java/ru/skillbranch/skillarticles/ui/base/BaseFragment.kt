@@ -4,19 +4,22 @@ import android.os.Bundle
 import android.view.*
 import androidx.annotation.VisibleForTesting
 import androidx.fragment.app.Fragment
-import com.google.android.material.appbar.MaterialToolbar
 import kotlinx.android.synthetic.main.activity_root.*
 import ru.skillbranch.skillarticles.ui.RootActivity
+import ru.skillbranch.skillarticles.ui.base.BaseActivity.BottombarBuilder
+import ru.skillbranch.skillarticles.ui.base.BaseActivity.ToolbarBuilder
 import ru.skillbranch.skillarticles.viewmodels.base.BaseViewModel
 import ru.skillbranch.skillarticles.viewmodels.base.IViewModelState
 import ru.skillbranch.skillarticles.viewmodels.base.Loading
-import javax.inject.Inject
-
 
 abstract class BaseFragment<T : BaseViewModel<out IViewModelState>> : Fragment() {
 
-    @Inject
-    lateinit var root: RootActivity
+    //mock root for testing
+    @VisibleForTesting(otherwise = VisibleForTesting.NONE)
+    var _mockRoot: RootActivity? = null
+
+    val root: RootActivity
+        get() = _mockRoot ?: activity as RootActivity
 
     open val binding: Binding? = null
 
@@ -27,7 +30,7 @@ abstract class BaseFragment<T : BaseViewModel<out IViewModelState>> : Fragment()
     open val prepareToolbar: (ToolbarBuilder.() -> Unit)? = null
     open val prepareBottombar: (BottombarBuilder.() -> Unit)? = null
 
-    val toolbar: MaterialToolbar
+    val toolbar
         get() = root.toolbar
 
     //set listeners, tuning views
@@ -39,7 +42,6 @@ abstract class BaseFragment<T : BaseViewModel<out IViewModelState>> : Fragment()
         savedInstanceState: Bundle?
     ): View? = inflater.inflate(layout, container, false)
 
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -49,13 +51,13 @@ abstract class BaseFragment<T : BaseViewModel<out IViewModelState>> : Fragment()
 
         //owner it is view
         viewModel.observeState(viewLifecycleOwner) { binding?.bind(it) }
-
         //bind default values if viewmodel not loaded data
         if (binding?.isInflated == false) binding?.onFinishInflate()
 
         viewModel.observeNotifications(viewLifecycleOwner) { root.renderNotification(it) }
         viewModel.observeNavigation(viewLifecycleOwner) { root.viewModel.navigate(it) }
         viewModel.observeLoading(viewLifecycleOwner) { renderLoading(it) }
+
     }
 
     override fun onViewStateRestored(savedInstanceState: Bundle?) {
@@ -99,8 +101,8 @@ abstract class BaseFragment<T : BaseViewModel<out IViewModelState>> : Fragment()
         super.onPrepareOptionsMenu(menu)
     }
 
+    //open for overwrite in fregment if need
     open fun renderLoading(loadingState: Loading) {
         root.renderLoading(loadingState)
     }
-
 }

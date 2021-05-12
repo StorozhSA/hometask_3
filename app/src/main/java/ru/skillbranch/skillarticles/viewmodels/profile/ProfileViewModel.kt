@@ -7,28 +7,25 @@ import android.os.Parcel
 import android.os.Parcelable
 import android.provider.Settings
 import androidx.annotation.VisibleForTesting
-import androidx.hilt.Assisted
-import androidx.hilt.lifecycle.ViewModelInject
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
 import kotlinx.android.parcel.Parcelize
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import ru.skillbranch.skillarticles.data.repositories.ProfileRepository
 import ru.skillbranch.skillarticles.viewmodels.base.*
 import java.io.InputStream
 
+class ProfileViewModel(handle: SavedStateHandle) :
+    BaseViewModel<ProfileState>(handle, ProfileState()) {
 
-class ProfileViewModel @ViewModelInject constructor(
-    @Assisted handle: SavedStateHandle,
-    private val repository: ProfileRepository,
-) : BaseViewModel<ProfileState>(handle, ProfileState()) {
-
-
+    private val repository = ProfileRepository
     private val activityResults = MutableLiveData<Event<PendingAction>>()
-
     private val storagePermissions = listOf<String>(
         Manifest.permission.WRITE_EXTERNAL_STORAGE,
         Manifest.permission.READ_EXTERNAL_STORAGE
@@ -36,15 +33,15 @@ class ProfileViewModel @ViewModelInject constructor(
 
     init {
         subscribeOnDataSource(repository.getProfile()) { profile, state ->
-            profile?.run {
-                state.copy(
-                    avatar = avatar,
-                    name = name,
-                    about = about,
-                    rating = rating,
-                    respect = respect
-                )
-            }
+            profile ?: return@subscribeOnDataSource null
+            state.copy(
+                name = profile.name,
+                avatar = profile.avatar,
+                rating = profile.rating,
+                respect = profile.respect,
+                about = profile.about
+            )
+
         }
     }
 
@@ -53,19 +50,29 @@ class ProfileViewModel @ViewModelInject constructor(
         activityResults.value = Event(action)
     }
 
+    fun handleTestAction(source: Uri, destination: Uri) {
+        val pendingAction = PendingAction.EditAction(source to destination)
+        updateState { it.copy(pendingAction = pendingAction) }
+        requestPermissions(storagePermissions)
+    }
 
     fun handlePermission(permissionsResult: Map<String, Pair<Boolean, Boolean>>) {
-        val arePermissionsGranted = !permissionsResult.values.map { it.first }.contains(false)
-        val isPermissionRequestBlocked = permissionsResult.values.map { it.second }.contains(false)
+
+        val isAllGrantad = !permissionsResult.values.map { it.first }.contains(false)
+        val isAllMayBeShown = !permissionsResult.values.map { it.second }.contains(false)
 
         when {
-            arePermissionsGranted -> executePendingAction()
-            isPermissionRequestBlocked -> executeOpenSettings()
+            //if all permissions granted execute action
+            isAllGrantad -> executePendingAction()
+            //if request permission not may be shown(dont ask again check) show app settings for manual permission
+            !isAllMayBeShown -> executeOpenSettings()
+            //else retry request permission
             else -> {
                 val msg = Notify.ErrorMessage(
                     "Need permissions for storage",
-                    "Retry"
-                ) { requestPermissions(storagePermissions) }
+                    "Retry",
+                    { requestPermissions(storagePermissions) }
+                )
                 notify(msg)
             }
         }
@@ -82,52 +89,63 @@ class ProfileViewModel @ViewModelInject constructor(
         notify(
             Notify.ErrorMessage(
                 "Need permissions for storage",
-                "Open settings"
-            ) { errHandler() }
+                "Open settings",
+                errHandler
+            )
         )
     }
 
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     fun executePendingAction() {
-        currentState.pendingAction?.let { startForResult(it) }
+        val pendingAction = currentState.pendingAction ?: return
+        startForResult(pendingAction)
     }
 
     fun handleUploadPhoto(inputStream: InputStream?) {
-        inputStream ?: return
+        inputStream ?: return //or show error notification
 
         launchSafety(null, { updateState { it.copy(pendingAction = null) } }) {
-            val byteArray = inputStream.use { it.readBytes() }
+            //read file stream on background thread(IO)
+            val byteArray =
+                withContext(Dispatchers.IO) { inputStream.use { input -> input.readBytes() } }
 
-            val requestFile = byteArray.toRequestBody("image/jpeg".toMediaType())
-            val body = MultipartBody.Part.createFormData("avatar", "name.jpg", requestFile)
+            val reqFile: RequestBody = byteArray.toRequestBody("image/jpeg".toMediaType())
+            val body: MultipartBody.Part =
+                MultipartBody.Part.createFormData("avatar", "name.jpg", reqFile)
             repository.uploadAvatar(body)
         }
     }
+
 
     fun observeActivityResults(owner: LifecycleOwner, handle: (action: PendingAction) -> Unit) {
         activityResults.observe(owner, EventObserver { handle(it) })
     }
 
-    fun handleCameraAction(uri: Uri) {
-        val pendingAction = PendingAction.CameraAction(uri)
-        updateState { it.copy(pendingAction = pendingAction) }
+    fun handleEditAction(source: Uri, destination: Uri) {
+        updateState { it.copy(pendingAction = PendingAction.EditAction(source to destination)) }
+        requestPermissions(storagePermissions)
+    }
+
+    fun handleCameraAction(destination: Uri) {
+        updateState { it.copy(pendingAction = PendingAction.CameraAction(destination)) }
         requestPermissions(storagePermissions)
     }
 
     fun handleGalleryAction() {
-        val pendingAction = PendingAction.GalleryAction("image/jpeg")
-        updateState { it.copy(pendingAction = pendingAction) }
-        requestPermissions(storagePermissions)
-    }
-
-    fun handleEditAction(source: Uri, destination: Uri) {
-        val pendingAction = PendingAction.EditAction(source to destination)
-        updateState { it.copy(pendingAction = pendingAction) }
+        updateState { it.copy(pendingAction = PendingAction.GalleryAction("image/jpeg")) }
         requestPermissions(storagePermissions)
     }
 
     fun handleDeleteAction() {
+        //remove avatar from server
         launchSafety {
             repository.removeAvatar()
+        }
+    }
+
+    fun handleEditProfile(name: String, about: String) {
+        launchSafety {
+            repository.editProfile(name, about)
         }
     }
 }
@@ -150,7 +168,7 @@ data class ProfileState(
 }
 
 sealed class PendingAction() : Parcelable {
-    abstract val payload: Any?
+    abstract val payload: Any? //нагрузка
 
     @Parcelize
     data class GalleryAction(override val payload: String) : PendingAction()
@@ -160,7 +178,6 @@ sealed class PendingAction() : Parcelable {
 
     @Parcelize
     data class CameraAction(override val payload: Uri) : PendingAction()
-
 
     data class EditAction(override val payload: Pair<Uri, Uri>) : PendingAction(), Parcelable {
         constructor(parcel: Parcel) : this(Uri.parse(parcel.readString()) to Uri.parse(parcel.readString()))
@@ -185,5 +202,3 @@ sealed class PendingAction() : Parcelable {
         }
     }
 }
-
-

@@ -2,153 +2,97 @@ package ru.skillbranch.skillarticles.extensions
 
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.math.abs
 
-const val SECOND = 1000L
-const val MINUTE = 60 * SECOND
-const val HOUR = 60 * MINUTE
-const val DAY = 24 * HOUR
-
+private const val SECOND = 1000L
+private const val MINUTE = 60L * SECOND
+private const val HOUR = 60L * MINUTE
+private const val DAY = 24L * HOUR
 
 fun Date.format(pattern: String = "HH:mm:ss dd.MM.yy"): String {
-    val dateFormat = SimpleDateFormat(pattern, Locale.getDefault())
+    val dateFormat = SimpleDateFormat(pattern, Locale("ru"))
     return dateFormat.format(this)
 }
 
-fun Date.add(value: Int, unit: TimeUnits = TimeUnits.SECOND): Date {
-    time += when (unit) {
-        TimeUnits.SECOND -> value * SECOND
-        TimeUnits.MINUTE -> value * MINUTE
-        TimeUnits.HOUR -> value * HOUR
-        TimeUnits.DAY -> value * DAY
+fun Date.add(value: Int, timeUnit: TimeUnits): Date {
+    return this.apply {
+        time += when (timeUnit) {
+            TimeUnits.SECOND -> value * SECOND
+            TimeUnits.DAY -> value * DAY
+            TimeUnits.HOUR -> value * HOUR
+            TimeUnits.MINUTE -> value * MINUTE
+        }
     }
-    return this
+
 }
 
-fun Date.shortFormat(): String? {
-    val pattern = if (this.isSameDay(Date())) "HH:mm" else "dd.MM.yy"
-    return this.format(pattern)
+fun Date.shortFormat(): String {
+    return this.format(if (isSameDay(Date())) "HH:mm" else "dd.MM.yy")
 }
 
 fun Date.isSameDay(date: Date): Boolean {
-    val day1 = this.time / DAY
-    val day2 = date.time / DAY
-    return day1 == day2
+    return this.time / DAY == date.time / DAY
 }
 
 fun Date.humanizeDiff(date: Date = Date()): String {
-    val diff = date.time - this.time
 
-    return when (Locale.getDefault()) {
-        Locale("ru") -> humanizeDiffRu(diff)
-        else -> humanizeDiffEng(diff)
-    }
-}
-
-private fun humanizeDiffRu(timeDiff: Long): String {
-    var diff = timeDiff
-    var isInFuture = false
-    val pattern =
-        if (diff > 0) "%s назад"
-        else {
-            isInFuture = true
-            diff = -diff
-            "через %s"
+    return when {
+        abs(this.time - date.time) <= SECOND && date > this -> "только что"
+        this.time < date.time - 360 * DAY -> "более года назад"
+        this.time > date.time + 360 * DAY -> "более чем через год"
+        else -> {
+            val seconds = (abs(this.time - date.time) / SECOND).toInt()
+            val template = if (this > date) "через %s" else "%s назад"
+            template.format(
+                when {
+                    seconds in 1..45 -> "несколько секунд"
+                    seconds in 45..75 -> "минуту"
+                    seconds in 75..45 * 60 -> pluralForm(seconds / 60, TimeUnits.MINUTE)
+                    seconds in 45 * 60..75 * 60 -> "час"
+                    seconds in 75 * 60..22 * 3600 -> pluralForm(seconds / 3600, TimeUnits.HOUR)
+                    seconds in 22 * 3600..26 * 3600 -> "день"
+                    seconds in 26 * 3600..360 * 86400 -> pluralForm(seconds / 86400, TimeUnits.DAY)
+                    else -> throw IllegalStateException()
+                }
+            )
         }
 
-    return when (diff) {
-        in (0..SECOND) ->
-            "только что"
-        in (SECOND..45 * SECOND) ->
-            pattern.format("несколько секунд")
-        in (45 * SECOND..75 * SECOND) ->
-            pattern.format("минуту")
-        in (75 * SECOND..45 * MINUTE) ->
-            pattern.format(TimeUnits.MINUTE.pluralRu((diff / MINUTE).toInt()))
-        in (45 * MINUTE..75 * MINUTE) ->
-            pattern.format("час")
-        in (75 * MINUTE..22 * HOUR) ->
-            pattern.format(TimeUnits.HOUR.pluralRu((diff / HOUR).toInt()))
-        in (22 * HOUR..26 * HOUR) ->
-            pattern.format("день")
-        in (26 * HOUR..360 * DAY) ->
-            pattern.format(TimeUnits.DAY.pluralRu((diff / DAY).toInt()))
-        in (360 * DAY..Long.MAX_VALUE) ->
-            if (isInFuture) pattern.format("более чем год")
-            else pattern.format("более года")
-        else -> "Ошибка!"
     }
 }
 
-private fun humanizeDiffEng(timeDiff: Long): String {
-    var diff = timeDiff
-    val seconds = (diff / 1000)
-    val minutes = (seconds / 60)
-    val hours = (minutes / 60)
-    val days = (hours / 24)
 
-    var isInFuture = false
-    val pattern =
-        if (diff > 0) "%s ago"
-        else {
-            isInFuture = true
-            diff = -diff
-            "in %s"
-        }
+private fun pluralForm(value: Int, unit: TimeUnits): String {
 
-    return when (diff) {
-        in 0L..1 * SECOND -> "just now"
-        in 1 * SECOND..45 * SECOND -> pattern.format("a few seconds")
-        in 45 * SECOND..75 * SECOND -> pattern.format("a minute")
-        in 75 * SECOND..45 * MINUTE -> pattern.format("$minutes minutes")
-        in 45 * MINUTE..75 * MINUTE -> pattern.format("an hour")
-        in 75 * MINUTE..22 * HOUR -> pattern.format("$hours hour")
-        in 22 * HOUR..26 * HOUR -> pattern.format("one day")
-        in 26 * HOUR..360 * DAY -> pattern.format("$days days")
-        else -> pattern.format("more than a year")
+
+    val form = when {
+        value % 10 == 1 && value != 11 -> 0
+        value % 10 in 2..4 -> 1
+        else -> 2
     }
+    val forms = listOf(
+        "%s секунду",
+        "%s секунды",
+        "%s секунд",
+        "%s минуту",
+        "%s минуты",
+        "%s минут",
+        "%s час",
+        "%s часа",
+        "%s часов",
+        "%s день",
+        "%s дня",
+        "%s дней"
+    )
+    return forms[form + 3 * when (unit) {
+        TimeUnits.SECOND -> 0
+        TimeUnits.MINUTE -> 1
+        TimeUnits.HOUR -> 2
+        TimeUnits.DAY -> 3
+    }].format(value)
 }
-
 
 enum class TimeUnits {
-    SECOND,
-    MINUTE,
-    HOUR,
-    DAY;
+    SECOND, MINUTE, HOUR, DAY;
 
-    fun pluralRu(value: Int): String {
-
-        val rangeType = when {
-            value in (5..20) || value % 10 in (5..10) -> 3
-            value % 10 == 1 -> 1
-            value % 10 in (2..4) -> 2
-            else -> 3
-        }
-
-        return when (this) {
-            SECOND -> when (rangeType) {
-                1 -> "$value секунду"
-                2 -> "$value секунды"
-                3 -> "$value секунд"
-                else -> "er1ошибка"
-            }
-            MINUTE -> when (rangeType) {
-                1 -> "$value минуту"
-                2 -> "$value минуты"
-                3 -> "$value минут"
-                else -> "er2ошибка"
-            }
-            HOUR -> when (rangeType) {
-                1 -> "$value час"
-                2 -> "$value часа"
-                3 -> "$value часов"
-                else -> "er3ошибка"
-            }
-            DAY -> when (rangeType) {
-                1 -> "$value день"
-                2 -> "$value дня"
-                3 -> "$value дней"
-                else -> "er4ошибка"
-            }
-        }
-    }
+    fun plural(value: Int): String = pluralForm(value, this)
 }

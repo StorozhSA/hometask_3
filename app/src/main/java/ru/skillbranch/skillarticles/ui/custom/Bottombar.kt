@@ -27,20 +27,19 @@ class Bottombar @JvmOverloads constructor(
     }
 
     init {
+//        View.inflate(context, R.layout.layout_bottombar, this)
         val materialBg = MaterialShapeDrawable.createWithElevationOverlay(context)
         materialBg.elevation = elevation
         background = materialBg
     }
 
-    //save state
     override fun onSaveInstanceState(): Parcelable? {
         val savedState = SavedState(super.onSaveInstanceState())
         savedState.ssIsSearchMode = isSearchMode
         return savedState
     }
 
-    //restore state
-    override fun onRestoreInstanceState(state: Parcelable) {
+    override fun onRestoreInstanceState(state: Parcelable?) {
         super.onRestoreInstanceState(state)
         if (state is SavedState) {
             isSearchMode = state.ssIsSearchMode
@@ -95,10 +94,10 @@ class Bottombar @JvmOverloads constructor(
             btn_result_down.isEnabled = true
         }
 
-        //lock button presses in min/max positions
-        if (position == 0) btn_result_up.isEnabled = false
-        if (position == (searchCount - 1)) btn_result_down.isEnabled = false
-
+        when (position) {
+            0 -> btn_result_up.isEnabled = false
+            searchCount - 1 -> btn_result_down.isEnabled = false
+        }
     }
 
     fun show() {
@@ -126,7 +125,7 @@ class Bottombar @JvmOverloads constructor(
         override fun describeContents() = 0
 
         companion object CREATOR : Parcelable.Creator<SavedState> {
-            override fun createFromParcel(parcel: Parcel) = SavedState(parcel)
+            override fun createFromParcel(source: Parcel) = SavedState(source)
             override fun newArray(size: Int): Array<SavedState?> = arrayOfNulls(size)
         }
     }

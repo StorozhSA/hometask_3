@@ -30,6 +30,7 @@ interface IMarkdownView {
         } catch (e: Exception) {
 
         }
+
     }
 
     fun renderSearchPosition(

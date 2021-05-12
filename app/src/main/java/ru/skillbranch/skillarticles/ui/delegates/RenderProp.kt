@@ -33,7 +33,6 @@ class RenderProp<T : Any>(
         if (listeners.isNotEmpty()) listeners.forEach { it.invoke() }
     }
 
-    // register additional listener
     fun addListener(listener: () -> Unit) {
         listeners.add(listener)
     }

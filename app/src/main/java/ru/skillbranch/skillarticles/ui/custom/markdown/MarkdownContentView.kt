@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Parcel
 import android.os.Parcelable
 import android.util.AttributeSet
+import android.util.Log
 import android.util.SparseArray
 import android.view.View
 import android.view.ViewGroup
@@ -29,12 +30,13 @@ class MarkdownContentView @JvmOverloads constructor(
 
     var textSize by Delegates.observable(14f) { _, old, value ->
         if (value == old) return@observable
-        this.children.forEach {
+        children.forEach {
             it as IMarkdownView
             it.fontSize = value
         }
     }
     var isLoading by Delegates.observable(false) { _, _, newValue ->
+        Log.e("MarkdownContentView", "isLoading : $newValue");
         if (!newValue) hideShimmer()
         else showShimmer()
     }
@@ -130,7 +132,7 @@ class MarkdownContentView @JvmOverloads constructor(
         }
 
         usedHeight += paddingBottom
-        setMeasuredDimension(width, if (usedHeight < minimumHeight) minimumHeight else usedHeight)
+        setMeasuredDimension(width, usedHeight)
     }
 
 
@@ -167,15 +169,20 @@ class MarkdownContentView @JvmOverloads constructor(
             when (it) {
                 is MarkdownElement.Text -> {
                     val tv = MarkdownTextView(context, textSize).apply {
+
                         setPaddingOptionally(
                             left = defaultSpace,
                             right = defaultSpace
                         )
                         setLineSpacing(fontSize * 0.5f, 1f)
                     }
+
                     MarkdownBuilder(context)
                         .markdownToSpan(it)
-                        .run { tv.setText(this, TextView.BufferType.SPANNABLE) }
+                        .run {
+                            tv.setText(this, TextView.BufferType.SPANNABLE)
+                        }
+
                     addView(tv)
                 }
 
@@ -213,6 +220,7 @@ class MarkdownContentView @JvmOverloads constructor(
         }
 
         if (searchResult.isEmpty()) return
+
 
         val bounds = elements.map { it.bounds }
         val result = searchResult.groupByBounds(bounds)
@@ -260,13 +268,20 @@ class MarkdownContentView @JvmOverloads constructor(
         return state
     }
 
-    override fun onRestoreInstanceState(state: Parcelable?) {
+    override fun onRestoreInstanceState(state: Parcelable) {
         super.onRestoreInstanceState(state)
         if (state is SavedState) layoutManager = state.layout
+
+//        //temp solution, remove this in fragment
+//        children.filter { it !is MarkdownTextView }
+//            .forEachIndexed { index, it -> layoutManager.attachToParent(it, index) }
     }
 
     override fun dispatchSaveInstanceState(container: SparseArray<Parcelable>?) {
-        //save children manually without markdown text view
+//        //temp solution, remove this in fragment
+//        children.filter { it !is MarkdownTextView }
+//            .forEachIndexed { index, it -> layoutManager.attachToParent(it, index) }
+        //save children manually without text view
         children.filter { it !is MarkdownTextView }
             .forEach { it.saveHierarchyState(layoutManager.container) }
         //save only markdownContentView
@@ -291,7 +306,7 @@ class MarkdownContentView @JvmOverloads constructor(
         var container: SparseArray<Parcelable> = SparseArray()
 
         constructor(parcel: Parcel) : this() {
-            ids = parcel.createIntArray()!!.toMutableList()
+            ids = parcel.readArrayList(Int::class.java.classLoader) as ArrayList<Int>
             container =
                 parcel.readSparseArray<Parcelable>(this::class.java.classLoader) as SparseArray<Parcelable>
         }
@@ -316,7 +331,6 @@ class MarkdownContentView @JvmOverloads constructor(
         companion object CREATOR : Parcelable.Creator<LayoutManager> {
             override fun createFromParcel(parcel: Parcel): LayoutManager = LayoutManager(parcel)
             override fun newArray(size: Int): Array<LayoutManager?> = arrayOfNulls(size)
-
         }
     }
 
@@ -341,7 +355,6 @@ class MarkdownContentView @JvmOverloads constructor(
 
         companion object CREATOR : Parcelable.Creator<SavedState> {
             override fun createFromParcel(parcel: Parcel) = SavedState(parcel)
-
             override fun newArray(size: Int): Array<SavedState?> = arrayOfNulls(size)
         }
     }
