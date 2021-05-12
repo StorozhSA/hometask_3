@@ -20,6 +20,9 @@ abstract class BaseViewModel<T : IViewModelState>(
 
     @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
     val navigation = MutableLiveData<Event<NavigationCommand>>()
+
+    @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
+    val permissions = MutableLiveData<Event<List<String>>>()
     val loading = MutableLiveData<Loading>(Loading.HIDE_LOADING)
 
     /***
@@ -55,8 +58,9 @@ abstract class BaseViewModel<T : IViewModelState>(
      * соответсвенно при изменении конфигурации и пересоздании Activity уведомление не будет вызвано
      * повторно
      */
+    @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
     @UiThread
-    protected fun notify(content: Notify) {
+    fun notify(content: Notify) {
         notifications.value = Event(content)
     }
 
@@ -174,6 +178,14 @@ abstract class BaseViewModel<T : IViewModelState>(
             hideLoading()
             completionHandler?.invoke(it)
         }
+    }
+
+    fun requestPermissions(requestedPermissions: List<String>) {
+        permissions.value = Event(requestedPermissions)
+    }
+
+    fun observePermissions(owner: LifecycleOwner, handle: (permissions: List<String>) -> Unit) {
+        permissions.observe(owner, EventObserver { handle(it) })
     }
 }
 

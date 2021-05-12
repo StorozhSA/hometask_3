@@ -73,16 +73,29 @@
         app:layout_constraintTop_toBottomOf="@id/wrap_password" />
 
     <TextView
-        android:id="@+id/tv_privacy"
+        android:id="@+id/tv_register"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textColor="@color/color_gray"
-        android:text="Privacy policy"
+        android:text="Registration"
         android:bufferType="spannable"
-        app:layout_constraintBottom_toTopOf="@id/tv_access_code"
+        app:layout_constraintBottom_toTopOf="@id/tv_privacy"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/btn_login"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintVertical_chainStyle="packed" />
+
+    <TextView
+        android:id="@+id/tv_privacy"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:bufferType="spannable"
+        android:text="Privacy policy"
+        android:textColor="@color/color_gray"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/tv_access_code"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tv_register"
         app:layout_constraintVertical_chainStyle="packed" />
 
     <TextView
@@ -92,6 +105,7 @@
         android:textColor="@color/color_gray"
         android:text="How to get authorization code"
         android:bufferType="spannable"
+        android:visibility="invisible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
